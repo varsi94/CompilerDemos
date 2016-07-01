@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
@@ -50,7 +51,21 @@ namespace AnalyzerDemo
 
 		private async Task<Document> ChangeVarAsync(Document document, LocalDeclarationStatementSyntax declaration, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			//A szemantikus modellre szükség van, hogy a jobb oldal típusát kiderítsük.
+			var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+			var typeInfo = semanticModel.GetTypeInfo(declaration.Declaration.Variables.First().Initializer.Value);
+
+			//Módosítjuk a kifejezést.
+			LocalDeclarationStatementSyntax declaration2 = declaration.Update(declaration.Modifiers,
+				declaration.Declaration.Update(SyntaxFactory.ParseTypeName(typeInfo.Type.Name), declaration.Declaration.Variables),
+				declaration.SemicolonToken);
+
+			//Újraformázzuk, hogy ne romoljon el a formázás.
+			var formatted = declaration2.WithAdditionalAnnotations(Formatter.Annotation);
+			var root = await document.GetSyntaxRootAsync(cancellationToken);
+			var newRoot = root.ReplaceNode(declaration, formatted);
+
+			return document.WithSyntaxRoot(newRoot);
 		}
 	}
 }

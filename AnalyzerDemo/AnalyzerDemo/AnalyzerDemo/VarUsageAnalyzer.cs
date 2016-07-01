@@ -29,7 +29,32 @@ namespace AnalyzerDemo
 
 		private void AnalyzeSyntaxNode(SyntaxNodeAnalysisContext context)
 		{
-			throw new NotImplementedException();
+			var localDeclaration = (LocalDeclarationStatementSyntax)context.Node;
+			//Ha nem var, megyünk tovább.
+			if (!localDeclaration.Declaration.Type.IsVar)
+			{
+				return;
+			}
+			
+			//Var-ral csak egy változót tudunk deklarálni.
+			var variable = localDeclaration.Declaration.Variables.First();
+			if (variable.Initializer?.Value == null)
+			{
+				return;
+			}
+
+			//Inicializáló kifejezés lekérdezése
+			var initializerStr = variable.Initializer.Value.ToString();
+			//Típus lekérdezése
+			var semanticModel = context.SemanticModel;
+			var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value, context.CancellationToken);
+			var typeStr = typeInfo.Type?.Name;
+			//Ha nem tartalmazza a deklaráció a típust, akkor az nem jó.
+			if (initializerStr != null && typeStr != null && !initializerStr.Contains(typeStr))
+			{
+				var diagnostic = Diagnostic.Create(Rule, localDeclaration.GetLocation(), variable.Identifier.Text);
+				context.ReportDiagnostic(diagnostic);
+			}
 		}
 	}
 }
