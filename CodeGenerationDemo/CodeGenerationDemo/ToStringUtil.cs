@@ -49,6 +49,55 @@ namespace CodeGenerationDemo
 				{
 					//TODO: propertyk kiírása
 					//Érdemes használni: http://roslynquoter.azurewebsites.net/
+					//Property neve
+					method = method.AddBodyStatements(SyntaxFactory.ExpressionStatement(
+							SyntaxFactory.InvocationExpression(
+								SyntaxFactory.MemberAccessExpression(
+									SyntaxKind.SimpleMemberAccessExpression,
+									SyntaxFactory.IdentifierName("sb"),
+									SyntaxFactory.IdentifierName("Append")))
+							.WithArgumentList(
+								SyntaxFactory.ArgumentList(
+									SyntaxFactory.SingletonSeparatedList(
+										SyntaxFactory.Argument(
+											SyntaxFactory.LiteralExpression(
+												SyntaxKind.StringLiteralExpression,
+												SyntaxFactory.Literal(prop.Name + ":\n\t"))))))));
+
+					//Property értékének kiírása
+					method = method.AddBodyStatements(SyntaxFactory.ExpressionStatement(
+						SyntaxFactory.InvocationExpression(
+							SyntaxFactory.MemberAccessExpression(
+								SyntaxKind.SimpleMemberAccessExpression,
+								SyntaxFactory.IdentifierName("sb"),
+								SyntaxFactory.IdentifierName("Append")))
+							.WithArgumentList(
+								SyntaxFactory.ArgumentList(
+									SyntaxFactory.SingletonSeparatedList(
+										SyntaxFactory.Argument(
+											SyntaxFactory.InvocationExpression(
+												SyntaxFactory.MemberAccessExpression(
+													SyntaxKind.SimpleMemberAccessExpression,
+													SyntaxFactory.MemberAccessExpression(
+														SyntaxKind.SimpleMemberAccessExpression,
+														SyntaxFactory.IdentifierName("obj"),
+														SyntaxFactory.IdentifierName(prop.Name)),
+													SyntaxFactory.IdentifierName("ToString")))))))));
+
+					//Soremelés
+					method = method.AddBodyStatements(SyntaxFactory.ExpressionStatement(
+						SyntaxFactory.InvocationExpression(
+							SyntaxFactory.MemberAccessExpression(
+								SyntaxKind.SimpleMemberAccessExpression,
+								SyntaxFactory.IdentifierName("sb"),
+								SyntaxFactory.IdentifierName("Append")))
+							.WithArgumentList(
+								SyntaxFactory.ArgumentList(
+									SyntaxFactory.SingletonSeparatedList(
+										SyntaxFactory.Argument(
+											SyntaxFactory.LiteralExpression(
+												SyntaxKind.StringLiteralExpression,
+												SyntaxFactory.Literal("\n"))))))));
 				}
 
 				//Return statement
@@ -64,11 +113,36 @@ namespace CodeGenerationDemo
 			CompilationUnitSyntax compUnit = SyntaxFactory.CompilationUnit().AddMembers(classDeclaration);
 
 			//TODO: fordítás
+
+			//Usingok beállítása, + a System
+			foreach (var type in KnownTypes.Union(new[] { typeof(StringBuilder), typeof(object) }))
+			{
+				compUnit = compUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(type.Namespace)));
+			}
+
+			compilation = CSharpCompilation.Create("SerailizerAssmebly",
+				new[] { compUnit.SyntaxTree },
+				options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)).AddReferences(
+					MetadataReference.CreateFromFile(typeof(ToStringUtil).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(StringBuilder).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+
+			using (var ms = new MemoryStream())
+			{
+				compilation.Emit(ms);
+				ms.Position = 0;
+				generatedAssembly = Assembly.Load(ms.ToArray());
+			}
+
 		}
 
 		public static string GetString<T>(T obj)
 		{
-			throw new NotImplementedException();
+			return
+				(string)
+					generatedAssembly.GetType("ToStringGenerator")
+						.GetMethod("Get" + typeof(T).Name + "String")
+						.Invoke(null, new object[] {obj});
 		}
 
 		public static void SaveAssembly()
