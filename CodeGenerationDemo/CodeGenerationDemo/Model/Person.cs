@@ -14,7 +14,7 @@ namespace CodeGenerationDemo.Model
 
 		public override string ToString()
 		{
-			return base.ToString();
+			return "Person\n" + ToStringUtil.GetString(this);
 		}
 	}
 }

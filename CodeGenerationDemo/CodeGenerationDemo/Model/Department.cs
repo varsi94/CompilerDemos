@@ -13,7 +13,7 @@ namespace CodeGenerationDemo.Model
 
 		public override string ToString()
 		{
-			return base.ToString();
+			return "Deparment\n" +  ToStringUtil.GetString(this);
 		}
 	}
 }
