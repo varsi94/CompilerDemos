@@ -57,7 +57,7 @@ namespace AnalyzerDemo
 
 			//Módosítjuk a kifejezést.
 			LocalDeclarationStatementSyntax declaration2 = declaration.Update(declaration.Modifiers,
-				declaration.Declaration.Update(SyntaxFactory.ParseTypeName(typeInfo.Type.Name), declaration.Declaration.Variables),
+				declaration.Declaration.Update(SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)), declaration.Declaration.Variables),
 				declaration.SemicolonToken);
 
 			//Újraformázzuk, hogy ne romoljon el a formázás.

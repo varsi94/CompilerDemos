@@ -38,7 +38,8 @@ namespace AnalyzerDemo
 			
 			//Var-ral csak egy változót tudunk deklarálni.
 			var variable = localDeclaration.Declaration.Variables.First();
-			if (variable.Initializer?.Value == null)
+            //Literálok maradhatnak.
+			if (variable.Initializer?.Value == null || variable.Initializer?.Value is LiteralExpressionSyntax)
 			{
 				return;
 			}
