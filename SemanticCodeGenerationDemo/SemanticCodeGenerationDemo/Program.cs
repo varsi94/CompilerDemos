@@ -36,22 +36,22 @@ namespace SemanticCodeGenerationDemo
             //get semantic model and syntax generator
             var semanticModel = demoClass.GetSemanticModelAsync().Result;
             var symbol = semanticModel.GetDeclaredSymbol(constructor.ParameterList.Parameters.First());
-            var type = (symbol as IParameterSymbol).Type;
-            var generator = SyntaxGenerator.GetGenerator(project);
-            
+            var type = symbol.Type;
+
             //generate class
-            var stubDeclaration = generator.ClassDeclaration(type.Name + "Stub", accessibility: Accessibility.Public, interfaceTypes: new[]
-            {
-                SyntaxFactory.IdentifierName(
-                    type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))
-            }) as ClassDeclarationSyntax;
+            var generator = SyntaxGenerator.GetGenerator(project);
+            var stubDeclaration = (ClassDeclarationSyntax)generator.ClassDeclaration(type.Name + "Stub", 
+                accessibility: Accessibility.Public, interfaceTypes: new[]
+                {
+                    SyntaxFactory.IdentifierName(
+                        type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))
+                });
 
             //implement interface
-            foreach (var member in type.GetMembers())
+            foreach (var member in type.GetMembers().OfType<IMethodSymbol>())
             {
-                var memberMethod = member as IMethodSymbol;
-                var methodDeclaration = generator.AsPublicInterfaceImplementation(
-                    generator.MethodDeclaration(memberMethod), SyntaxFactory.ParseTypeName(type.Name)) as MethodDeclarationSyntax;
+                var methodDeclaration = (MethodDeclarationSyntax)generator.AsPublicInterfaceImplementation(
+                    generator.MethodDeclaration(member), SyntaxFactory.ParseTypeName(type.Name));
                 methodDeclaration = methodDeclaration.AddBodyStatements(SyntaxFactory.ExpressionStatement(
                     SyntaxFactory.InvocationExpression(
                         SyntaxFactory.MemberAccessExpression(
@@ -64,8 +64,8 @@ namespace SemanticCodeGenerationDemo
                                     SyntaxFactory.Argument(
                                         SyntaxFactory.LiteralExpression(
                                             SyntaxKind.StringLiteralExpression,
-                                            SyntaxFactory.Literal(memberMethod.Name + " called!"))))))));
-                foreach (var parameterSymbol in memberMethod.Parameters)
+                                            SyntaxFactory.Literal(member.Name + " called!"))))))));
+                foreach (var parameterSymbol in member.Parameters)
                 {
                     //write input parameters
                     methodDeclaration = methodDeclaration.AddBodyStatements(SyntaxFactory.ExpressionStatement(
@@ -115,6 +115,8 @@ namespace SemanticCodeGenerationDemo
             var stub = Activator.CreateInstance(assembly.GetType(type.Name + "Stub")) as IOutput;
             var logger = new Logger(stub);
             logger.LogPerson(new Person {Name = "Marci", Age = 22});
+            logger.LogString("Dummy szöveg!");
+            Console.ReadLine();
         }
     }
 }

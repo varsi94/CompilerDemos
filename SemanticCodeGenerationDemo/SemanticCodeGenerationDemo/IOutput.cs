@@ -9,5 +9,7 @@ namespace SemanticCodeGenerationDemo
     public interface IOutput
     {
         void Write<T>(T value);
+
+        void WritePersonData(string name, int age);
     }
 }

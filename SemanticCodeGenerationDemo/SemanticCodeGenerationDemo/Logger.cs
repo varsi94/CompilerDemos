@@ -17,8 +17,12 @@ namespace SemanticCodeGenerationDemo
 
         public void LogPerson(Person person)
         {
-            Output.Write(person.Name);
-            Output.Write(person.Age);
+            Output.WritePersonData(person.Name, person.Age);
+        }
+
+        public void LogString(string s)
+        {
+            Output.Write(s);
         }
     }
 }
