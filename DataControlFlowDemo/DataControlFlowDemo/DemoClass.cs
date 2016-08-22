@@ -13,10 +13,10 @@ namespace DataControlFlowDemo
 
         public void DataFlowAnalysis()
         {
-            int x = 5;
+            string x = "5";
             int y = 10;
             int z = 25;
-            x = 30;
+            x = "30";
             y = 20;
             y = 50;
         }

@@ -52,7 +52,7 @@ namespace DataControlFlowDemo
                 .OfType<MethodDeclarationSyntax>()
                 .Single(x => x.Identifier.Text == "ControlFlowAnalysis");
             var controlFlow = semanticModel.AnalyzeControlFlow(controlFlowAnalysisMethod.Body);
-            foreach (var syntaxNode in controlFlow.ExitPoints.Cast<ReturnStatementSyntax>())
+            foreach (var syntaxNode in controlFlow.ReturnStatements.Cast<ReturnStatementSyntax>())
             {
                 var result = semanticModel.GetConstantValue(syntaxNode.Expression);
                 if (result.HasValue)
