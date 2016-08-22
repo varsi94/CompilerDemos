@@ -27,9 +27,6 @@ namespace SemanticCodeGenerationDemo
             //Get constructor
             var constructor = demoClass.GetSyntaxRootAsync().Result
                 .DescendantNodes()
-                .OfType<ClassDeclarationSyntax>()
-                .First(c => c.Identifier.ToString() == "Logger")
-                .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
                 .First();
 
